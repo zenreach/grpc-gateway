@@ -55,14 +55,16 @@ func (s *ServeMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	for _, h := range s.handlers[r.Method] {
-		pathParams, err := h.pat.Match(components, verb)
-		if err != nil {
-			glog.V(3).Infof("path mismatch: %q to %q", path, h.pat)
-			continue
+	for _, handlers := range [][]handler{s.handlers[r.Method], s.handlers["*"]} {
+		for _, h := range handlers {
+			pathParams, err := h.pat.Match(components, verb)
+			if err != nil {
+				glog.V(3).Infof("path mismatch: %q to %q", path, h.pat)
+				continue
+			}
+			h.h(w, r, pathParams)
+			return
 		}
-		h.h(w, r, pathParams)
-		return
 	}
 
 	// lookup other methods to handle fallback from GET to POST and

@@ -7,8 +7,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gengo/grpc-gateway/utilities"
 	"github.com/gengo/grpc-gateway/runtime"
+	"github.com/gengo/grpc-gateway/utilities"
 )
 
 func TestMuxServeHTTP(t *testing.T) {
@@ -157,6 +157,46 @@ func TestMuxServeHTTP(t *testing.T) {
 				"Content-Type": "application/json",
 			},
 			respStatus: http.StatusMethodNotAllowed,
+		},
+		// wildcard HTTP methods
+		{
+			patterns: []stubPattern{
+				{
+					method: "*",
+					ops:    []int{int(utilities.OpLitPush), 0},
+					pool:   []string{"foo"},
+				},
+			},
+			reqMethod:   "GET",
+			reqPath:     "/foo",
+			respStatus:  http.StatusOK,
+			respContent: "* /foo",
+		},
+		{
+			patterns: []stubPattern{
+				{
+					method: "*",
+					ops:    []int{int(utilities.OpLitPush), 0},
+					pool:   []string{"foo"},
+				},
+			},
+			reqMethod:   "POST",
+			reqPath:     "/foo",
+			respStatus:  http.StatusOK,
+			respContent: "* /foo",
+		},
+		{
+			patterns: []stubPattern{
+				{
+					method: "*",
+					ops:    []int{int(utilities.OpLitPush), 0},
+					pool:   []string{"foo"},
+				},
+			},
+			reqMethod:   "PATCH",
+			reqPath:     "/foo",
+			respStatus:  http.StatusOK,
+			respContent: "* /foo",
 		},
 	} {
 		mux := runtime.NewServeMux()
