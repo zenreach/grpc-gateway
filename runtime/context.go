@@ -10,6 +10,7 @@ import (
 
 const metadataHeaderPrefix = "Grpc-Metadata-"
 const metadataTrailerPrefix = "Grpc-Trailer-"
+const corsHeaderPrefix = "access-control-"
 
 /*
 AnnotateContext adds context information such as metadata from the request.
@@ -22,6 +23,10 @@ func AnnotateContext(ctx context.Context, req *http.Request) context.Context {
 	for key, vals := range req.Header {
 		for _, val := range vals {
 			if key == "Authorization" {
+				pairs = append(pairs, key, val)
+				continue
+			}
+			if strings.HasPrefix(strings.ToLower(key), corsHeaderPrefix) {
 				pairs = append(pairs, key, val)
 				continue
 			}
