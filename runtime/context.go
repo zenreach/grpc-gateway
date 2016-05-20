@@ -11,7 +11,7 @@ import (
 const metadataHeaderPrefix = "Grpc-Metadata-"
 const metadataTrailerPrefix = "Grpc-Trailer-"
 const corsHeaderPrefix = "access-control-"
-
+const csrfTokenHeader = "X-Phabricator-Csrf"
 /*
 AnnotateContext adds context information such as metadata from the request.
 
@@ -26,7 +26,11 @@ func AnnotateContext(ctx context.Context, req *http.Request) context.Context {
 				pairs = append(pairs, key, val)
 				continue
 			}
-			if strings.HasPrefix(strings.ToLower(key), corsHeaderPrefix) {
+			if strings.EqualFold(key, csrfTokenHeader) {
+				pairs = append(pairs, key, val)
+				continue
+			}
+			if strings.EqualFold(key, corsHeaderPrefix) {
 				pairs = append(pairs, key, val)
 				continue
 			}
@@ -36,6 +40,19 @@ func AnnotateContext(ctx context.Context, req *http.Request) context.Context {
 		}
 	}
 
+	// append other cookies
+
+	// adding extra headers to metadata
+	pairs = append(pairs,
+		"http-request-method", req.Method,
+		"http-request-endpoint", req.RequestURI,
+		"http-request-host", req.Host,
+		"http-userAgent", req.UserAgent(),
+	)
+
+	for _, cookie := range req.Cookies() {
+		pairs = append(pairs, "http-request-cookie-" + cookie.Name, cookie.Value)
+	}
 	if len(pairs) == 0 {
 		return ctx
 	}
