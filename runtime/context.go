@@ -6,12 +6,14 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/metadata"
+	"net"
 )
 
 const metadataHeaderPrefix = "Grpc-Metadata-"
 const metadataTrailerPrefix = "Grpc-Trailer-"
 const corsHeaderPrefix = "access-control-"
 const csrfTokenHeader = "X-Phabricator-Csrf"
+
 /*
 AnnotateContext adds context information such as metadata from the request.
 
@@ -23,6 +25,10 @@ func AnnotateContext(ctx context.Context, req *http.Request) context.Context {
 	for key, vals := range req.Header {
 		for _, val := range vals {
 			if key == "Authorization" {
+				pairs = append(pairs, key, val)
+				continue
+			}
+			if key == "Cookie" {
 				pairs = append(pairs, key, val)
 				continue
 			}
@@ -41,6 +47,15 @@ func AnnotateContext(ctx context.Context, req *http.Request) context.Context {
 	}
 
 	// append other cookies
+	if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+		// If we aren't the first proxy retain prior
+		// X-Forwarded-For information as a comma+space
+		// separated list and fold multiple headers into one.
+		if prior, ok := req.Header["X-Forwarded-For"]; ok {
+			clientIP = strings.Join(prior, ", ") + ", " + clientIP
+		}
+		pairs = append(pairs, "X-Forwarded-For", clientIP)
+	}
 
 	// adding extra headers to metadata
 	pairs = append(pairs,
@@ -50,9 +65,6 @@ func AnnotateContext(ctx context.Context, req *http.Request) context.Context {
 		"http-userAgent", req.UserAgent(),
 	)
 
-	for _, cookie := range req.Cookies() {
-		pairs = append(pairs, "http-request-cookie-" + cookie.Name, cookie.Value)
-	}
 	if len(pairs) == 0 {
 		return ctx
 	}
