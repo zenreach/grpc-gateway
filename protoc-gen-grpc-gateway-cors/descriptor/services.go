@@ -50,9 +50,6 @@ func (r *Registry) loadServices(file *gw_descriptor.File) error {
 				svc.Methods = append(svc.Methods, meth)
 			}
 		}
-		if len(svc.Methods) == 0 {
-			continue
-		}
 		glog.V(2).Infof("Registered %s with %d method(s)", svc.GetName(), len(svc.Methods))
 		svcs = append(svcs, svc)
 	}

@@ -36,8 +36,9 @@ import "github.com/grpc-ecosystem/grpc-gateway/runtime"
 
 	corsTemplate = template.Must(template.New("cors").Parse(`
 {{range $svc := .}}
-// Returns an array of GRPC gatway mux apttersn to be enabled for CORS.
-func {{$svc.GetName}}CorsPatterns() []runtime.Pattern {
+// Export{{$svc.GetName}}CorsPatterns returns an array of grpc gatway mux patterns for
+// {{$svc.GetName}} service to enable CORS.
+func Export{{$svc.GetName}}CorsPatterns() []runtime.Pattern {
 	return []runtime.Pattern{
 		{{range $m := $svc.Methods -}}
 		{{range $b := $m.Bindings -}}
