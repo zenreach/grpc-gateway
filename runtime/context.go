@@ -44,7 +44,7 @@ At a minimum, the RemoteAddr is included in the fashion of "X-Forwarded-For",
 except that the forwarded destination is not another HTTP service but rather
 a gRPC service.
 */
-func AnnotateContext(ctx context.Context, req *http.Request) (context.Context, error) {
+func AnnotateContext(ctx context.Context, mux *ServeMux, req *http.Request) (context.Context, error) {
 	var pairs []string
 	timeout := DefaultContextTimeout
 	if tm := req.Header.Get(metadataGrpcTimeout); tm != "" {
@@ -56,10 +56,17 @@ func AnnotateContext(ctx context.Context, req *http.Request) (context.Context, e
 	}
 
 	for key, vals := range req.Header {
+	nextval:
 		for _, val := range vals {
 			// For backwards-compatibility, pass through 'authorization' header with no prefix.
 			if strings.ToLower(key) == "authorization" {
 				pairs = append(pairs, "authorization", val)
+			}
+			for _, m := range mux.headerMatchers {
+				if m(key) {
+					pairs = append(pairs, key, val)
+					continue nextval
+				}
 			}
 			if isPermanentHTTPHeader(key) {
 				pairs = append(pairs, strings.ToLower(fmt.Sprintf("%s%s", MetadataPrefix, key)), val)

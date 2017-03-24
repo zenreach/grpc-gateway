@@ -19,6 +19,7 @@ type ServeMux struct {
 	handlers               map[string][]handler
 	forwardResponseOptions []func(context.Context, http.ResponseWriter, proto.Message) error
 	marshalers             marshalerRegistry
+	headerMatchers         []func(string) bool
 }
 
 // ServeMuxOption is an option that can be given to a ServeMux on construction.
@@ -42,6 +43,7 @@ func NewServeMux(opts ...ServeMuxOption) *ServeMux {
 		handlers:               make(map[string][]handler),
 		forwardResponseOptions: make([]func(context.Context, http.ResponseWriter, proto.Message) error, 0),
 		marshalers:             makeMarshalerMIMERegistry(),
+		headerMatchers:         make([]func(string) bool, 0),
 	}
 
 	for _, opt := range opts {
