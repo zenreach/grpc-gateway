@@ -98,10 +98,14 @@ func AnnotateContext(ctx context.Context, mux *ServeMux, req *http.Request) (con
 	if timeout != 0 {
 		ctx, _ = context.WithTimeout(ctx, timeout)
 	}
+	mds := make([]metadata.MD, len(mux.metadataAdders))
+	for i, annotator := range mux.metadataAdders {
+		mds[i] = annotator(ctx, req)
+	}
 	if len(pairs) == 0 {
 		return ctx, nil
 	}
-	return metadata.NewContext(ctx, metadata.Pairs(pairs...)), nil
+	return metadata.NewContext(ctx, metadata.Join(append(mds, metadata.Pairs(pairs...))...)), nil
 }
 
 // ServerMetadata consists of metadata sent from gRPC server.

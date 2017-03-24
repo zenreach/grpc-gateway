@@ -7,6 +7,7 @@ import (
 	"golang.org/x/net/context"
 
 	"github.com/golang/protobuf/proto"
+	"google.golang.org/grpc/metadata"
 )
 
 // A HandlerFunc handles a specific pair of path pattern and HTTP method.
@@ -20,6 +21,7 @@ type ServeMux struct {
 	forwardResponseOptions []func(context.Context, http.ResponseWriter, proto.Message) error
 	marshalers             marshalerRegistry
 	headerMatchers         []func(string) bool
+	metadataAdders         []func(context.Context, *http.Request) metadata.MD
 }
 
 // ServeMuxOption is an option that can be given to a ServeMux on construction.
@@ -37,6 +39,13 @@ func WithForwardResponseOption(forwardResponseOption func(context.Context, http.
 	}
 }
 
+// WithMetadata returns metadata to be passed with context.
+func WithMetadata(annotator func(context.Context, *http.Request) metadata.MD) ServeMuxOption {
+	return func(serveMux *ServeMux) {
+		serveMux.metadataAdders = append(serveMux.metadataAdders, annotator)
+	}
+}
+
 // NewServeMux returns a new ServeMux whose internal mapping is empty.
 func NewServeMux(opts ...ServeMuxOption) *ServeMux {
 	serveMux := &ServeMux{
@@ -44,6 +53,7 @@ func NewServeMux(opts ...ServeMuxOption) *ServeMux {
 		forwardResponseOptions: make([]func(context.Context, http.ResponseWriter, proto.Message) error, 0),
 		marshalers:             makeMarshalerMIMERegistry(),
 		headerMatchers:         make([]func(string) bool, 0),
+		metadataAdders:          make([]func(context.Context, *http.Request) metadata.MD, 0),
 	}
 
 	for _, opt := range opts {
