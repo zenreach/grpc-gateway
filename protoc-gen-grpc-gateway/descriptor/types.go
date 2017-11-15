@@ -330,6 +330,6 @@ var (
 	}
 
 	apimachinaryTypeConv = map[string]string {
-		".k8s.io.apimachinery.pkg.apis.meta.v1.Timestamp": "runtime.Timestamp",
+		".k8s.io.apimachinery.pkg.apis.meta.v1.Time": "runtime.Timestamp",
 	}
 )

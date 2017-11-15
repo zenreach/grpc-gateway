@@ -14,7 +14,7 @@ import (
 )
 
 var apimachinarySchemas = map[string]schemaCore {
-	".k8s.io.apimachinery.pkg.apis.meta.v1.Timestamp": schemaCore{
+	".k8s.io.apimachinery.pkg.apis.meta.v1.Time": schemaCore{
 		Type: "string",
 		Format: "date-time",
 	},
